@@ -1,0 +1,36 @@
+# {{ ansible_managed }}
+
+# backend
+upstream {{ item.backend_name }} {
+    {% for backend in item.backends %}
+    server {{ backend }};
+    {% endfor %}
+}
+
+# static
+upstream {{ item.static_name }} {
+    {% for static in item.statics %}
+    server {{ static }};
+    {% endfor %}
+}
+
+server {
+    listen 80;
+    server_name {{ item.domain_backend|join(' ') }};
+    location / {
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   Host      $http_host;
+        proxy_pass         http://{{ item.backend_name }};
+    }
+}
+
+server {
+    listen 80;
+    server_name {{ item.domain_static|join(' ') }};
+    location / {
+        proxy_set_header   X-Real-IP $remote_addr;
+        proxy_set_header   Host      $http_host;
+        proxy_pass         http://{{ item.static_name }};
+		proxy_cache        mycache;
+    }
+}

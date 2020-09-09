@@ -1,0 +1,31 @@
+---
+- name: Include vars NONE
+  include_vars: ansible-nginx/vars/none.yml
+  when:
+    - backend_maintenance == "none"
+
+- name: Include vars DC1
+  include_vars: ansible-nginx/vars/dc1.yml
+  when:
+    - backend_maintenance == "maintenance_dc1"
+    
+- name: Include vars DC1
+  include_vars: ansible-nginx/vars/dc2.yml
+  when:
+    - backend_maintenance == "maintenance_dc2"
+    
+- name: deploy reverse proxy configurations
+  template:
+    src: nginx.conf.j2
+    dest: "{{ nginx_directory }}/nginx.conf"
+  notify:
+    - restart nginx
+
+- name: deploy reverse proxy configurations
+  template:
+    src: default.conf.j2
+    dest: "{{ nginx_reverse_proxy_config_directory }}/{{ item.config_name }}.conf"
+  with_items: "{{ nginx_reverse_proxy_proxies }}"
+  notify:
+    - restart nginx
+

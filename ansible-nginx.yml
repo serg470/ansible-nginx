@@ -1,0 +1,12 @@
+---
+- hosts: 127.0.0.1
+  become: yes
+  vars:
+# Set to none, maintenance_dc1, maintenance_dc2
+# none - All up
+# maintenance_dc1 - DC1 backends down
+# maintenance_dc2 - DC1 backends down
+    backend_maintenance: maintenance_dc1
+  roles:
+    - ansible-nginx
+    
