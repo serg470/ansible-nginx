@@ -6,7 +6,7 @@
 # none - All up
 # maintenance_dc1 - DC1 backends down
 # maintenance_dc2 - DC1 backends down
-    backend_maintenance: maintenance_dc1
+    backend_maintenance: maintenance_dc2
   roles:
     - ansible-nginx
     
