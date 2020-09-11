@@ -13,22 +13,57 @@
   include_vars: ansible-nginx/vars/dc2.yml
   when:
     - backend_maintenance == "maintenance_dc2"
-    
-- name: deploy reverse proxy configurations
+
+- name: deploy nginx configurations with cache for all frontends
   template:
     src: nginx.conf.j2
     dest: "{{ nginx_directory }}/nginx.conf"
+    
+- name: create some file
+  local_action:
+    module: template
+    src: site.conf.j2
+    dest: "ansible-nginx/templates/{{ item.config_name}}.conf"
+  with_items: "{{ nginx_reverse_proxy_proxies }}"   
 
-- name: deploy reverse proxy configurations
-  template:
-    src: default.conf.j2
-    dest: "{{ nginx_reverse_proxy_config_directory }}/{{ item.config_name }}.conf"
-  with_items: "{{ nginx_reverse_proxy_proxies }}"
-
+- name: Another symbolic mode example, adding some permissions and removing others
+  copy:
+    src: "ansible-nginx/templates/dc1.conf"
+    dest: "{{ nginx_reverse_proxy_config_directory }}/dc1.conf"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc1 }}"
+  
+- name: Copy config to remote host
+  copy:
+    src: "ansible-nginx/templates/dc2.conf"
+    dest: "{{ nginx_reverse_proxy_config_directory }}/dc2.conf"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc2 }}"
+  
+- name: Create a symbolic link
+  file:
+    src: "/etc/nginx/sites-available/dc1.conf"
+    dest: "/etc/nginx/sites-enabled/dc1.conf"
+    state: link
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc1 }}"
+  
+- name: Create a symbolic link
+  file:
+    src: "/etc/nginx/sites-available/dc2.conf"
+    dest: "/etc/nginx/sites-enabled/dc2.conf"
+    state: link
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc2 }}"
+    
+- name: Remove default site
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
     
 - name: Verify Nginx config
   become: yes
   command: nginx -t
   changed_when: false
   notify:
-    - reload nginx
+    - restart nginx

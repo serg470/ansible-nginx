@@ -1,0 +1,114 @@
+- name: Install pip
+  apt:
+    pkg:
+    - python-pip
+    - python-docker
+    state: present
+
+- name: Install pip modules for docker
+  pip:
+    name: docker-py
+
+- name: Get running containers
+  docker_host_info:
+    containers: yes
+  register: docker_info
+
+- name: Stop running containers
+  docker_container:
+    name: "{{ item }}"
+    state: stopped
+  loop: "{{ docker_info.containers | map(attribute='Id') | list }}"
+  
+- name: Remove Stoped docker containers
+  shell: |
+     docker rm $(docker ps -a -q);
+  when: docker_info.containers != 0
+  ignore_errors: yes
+
+- name: Get details of all images
+  docker_host_info:
+    images: yes
+    verbose_output: yes
+  register: image_info
+- name: Remove all images
+  docker_image:
+    name: "{{ item }}"
+    state: absent
+  loop: "{{ image_info.images | map(attribute='Id') | list }}"  
+  
+- name: Start backends containers
+  docker_container:
+    name: backend1
+    image: serg470/nginx_bs:b1
+    ports:
+     - "8080:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc1 }}"
+
+- name: Start backends containers
+  docker_container:
+    name: static1
+    image: serg470/nginx_bs:s1
+    ports:
+     - "8081:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc1 }}"
+
+- name: Start backends containers
+  docker_container:
+    name: dc1
+    image: serg470/nginx_bs:b1
+    ports:
+     - "8082:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc1 }}"
+
+- name: Start backends containers
+  docker_container:
+    name: static1-img
+    image: serg470/nginx_bs:s1
+    ports:
+     - "8083:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc1 }}"
+  
+- name: Start backends containers
+  docker_container:
+    name: backend2
+    image: serg470/nginx_bs:b2
+    ports:
+     - "8080:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc2 }}"
+     
+- name: Start backends containers
+  docker_container:
+    name: static2
+    image: serg470/nginx_bs:s2
+    ports:
+     - "8081:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc2 }}"
+  
+- name: Start backends containers
+  docker_container:
+    name: dc2
+    image: serg470/nginx_bs:b2
+    ports:
+     - "8082:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc2 }}"
+     
+- name: Start backends containers
+  docker_container:
+    name: static2-img
+    image: serg470/nginx_bs:s2
+    ports:
+     - "8083:80"
+  delegate_to: "{{ item }}"
+  with_items: "{{ groups.dc2 }}"
+  
+- name: Debug  
+  debug:
+    msg: "{{ ansible_hostname }}"

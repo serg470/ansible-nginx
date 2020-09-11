@@ -1,5 +1,11 @@
 ---
 # tasks file for ansible-nginx-reverse-proxy
+- include: infra.yml
+  tags: infrasrtucture
+  when:
+    - setup == "first"
 
 - include: deploy.yml
   tags: deploy
+   
+

@@ -1,12 +1,14 @@
 ---
-- hosts: 127.0.0.1
+- hosts: all
   become: yes
   vars:
 # Set to none, maintenance_dc1, maintenance_dc2
 # none - All up
 # maintenance_dc1 - DC1 backends down
-# maintenance_dc2 - DC1 backends down
-    backend_maintenance: maintenance_dc2
+# maintenance_dc2 - DC2 backends down
+    backend_maintenance: none
+#Set to first to first start
+    setup: first_
   roles:
     - ansible-nginx
     
